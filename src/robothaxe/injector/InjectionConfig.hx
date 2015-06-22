@@ -7,7 +7,7 @@
 
 package robothaxe.injector;
 
-import robothaxe.injector.injectionresults.InjectionResult;
+import robothaxe.injector.result.InjectionResult;
 
 class InjectionConfig
 {
@@ -25,26 +25,25 @@ class InjectionConfig
 
 	public function getResponse(injector:Injector):Dynamic
 	{
-		if (this.injector != null) injector = this.injector;
-
+		var _injector = this.injector != null ? this.injector : injector;
 		if (result != null)
 		{
-			return result.getResponse(injector);
+			return result.getResponse(_injector);
 		}
-		
-		var parentConfig = injector.getAncestorMapping(request, injectionName);
-
+		var parentConfig = _injector.getAncestorMapping(request, injectionName);
 		if (parentConfig != null)
 		{
 			return parentConfig.getResponse(injector);
 		}
-
 		return null;
 	}
 
 	public function hasResponse(injector:Injector):Bool
 	{
-		return (result != null);
+		if (result != null) return true;
+		if (this.injector != null) injector = this.injector;
+		var parentConfig = injector.getAncestorMapping(request, injectionName);
+		return parentConfig != null;
 	}
 
 	public function hasOwnResponse():Bool
@@ -56,9 +55,11 @@ class InjectionConfig
 	{
 		if (this.result != null && result != null)
 		{
-			trace('Warning: Injector already has a rule for type "' + Type.getClassName(request) + '", named "' + injectionName + '".\nIf you have overwritten this mapping intentionally you can use "injector.unmap()" prior to your replacement mapping in order to avoid seeing this message.');
+			trace('Warning: Injector already has a rule for type "' +
+			Type.getClassName(request) + '", named "' + injectionName +
+			'".\nIf you have overwritten this mapping intentionally you can use "injector.unmap()"
+			 prior to your replacement mapping in order to avoid seeing this message.');
 		}
-
 		this.result = result;
 	}
 

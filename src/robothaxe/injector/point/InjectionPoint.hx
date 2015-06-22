@@ -5,7 +5,7 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionpoints;
+package robothaxe.injector.point;
 
 import robothaxe.injector.Injector;
 import haxe.rtti.CType;

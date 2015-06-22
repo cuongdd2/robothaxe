@@ -6,7 +6,7 @@
 */
 package robothaxe.mvcs.support;
 
-import robothaxe.event.Event;
+import openfl.events.Event;
 import robothaxe.mvcs.Actor;
 import robothaxe.mvcs.ActorTest;
 

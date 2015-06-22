@@ -7,9 +7,9 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.event.EventDispatcher;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.EventDispatcher;
+import openfl.events.IEventDispatcher;
 
 import massive.munit.Assert;
 import robothaxe.base.EventMap;

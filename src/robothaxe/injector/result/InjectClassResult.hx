@@ -5,22 +5,22 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionresults;
+package robothaxe.injector.result;
 
 import robothaxe.injector.Injector;
 
-class InjectValueResult extends InjectionResult
+class InjectClassResult extends InjectionResult
 {
-	var value:Dynamic;
+	var responseType:Class<Dynamic>;
 	
-	public function new(value:Dynamic)
+	public function new(responseType:Class<Dynamic>)
 	{
 		super();
-		this.value = value;
+		this.responseType = responseType;
 	}
 	
 	public override function getResponse(injector:Injector):Dynamic
 	{
-		return value;
+		return injector.instantiate(responseType);
 	}
 }

@@ -7,12 +7,10 @@
 
 package robothaxe.base.support;
 
-class TestView implements ITestView
+import flash.display.DisplayObject;
+class TestView extends DisplayObject
 {
 	@inject("injectionName")
 	public var injectionPoint:String;
-	
-	public function new()
-	{
-	}
+
 }

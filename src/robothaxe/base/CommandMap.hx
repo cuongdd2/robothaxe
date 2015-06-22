@@ -7,13 +7,11 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
-import robothaxe.util.Dictionary;
+import robothaxe.injector.Injector;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 import robothaxe.core.ICommandMap;
-import robothaxe.core.IInjector;
 import robothaxe.core.IReflector;
-import robothaxe.util.Register;
 
 /**
  * An abstract <code>ICommandMap</code> implementation
@@ -26,9 +24,9 @@ class CommandMap implements ICommandMap
 	var eventDispatcher:IEventDispatcher;
 	
 	/**
-	 * The <code>IInjector</code> to inject with
+	 * The <code>Injector</code> to inject with
 	 */
-	var injector:IInjector;
+	var injector:Injector;
 	
 	/**
 	 * The <code>IReflector</code> to reflect with
@@ -40,16 +38,16 @@ class CommandMap implements ICommandMap
 	 *
 	 * TODO: This needs to be documented
 	 */
-	var eventTypeMap:Dictionary<String, Dictionary<Class<Dynamic>,Dictionary<Class<Dynamic>, Dynamic>>>;
+	var eventTypeMap:Map<String, Map<Class<Dynamic>, Map<Class<Dynamic>, Dynamic>>>;
 	
 	/**
 	 * Internal
 	 *
 	 * Collection of command classes that have been verified to implement an <code>execute</code> method
 	 */
-	var verifiedCommandClasses:Register<Class<Dynamic>>;
+	var verifiedCommandClasses:Array<Class<Dynamic>>;
 	
-	var detainedCommands:Register<Dynamic>;
+	var detainedCommands:Array<Dynamic>;
 	
 	//---------------------------------------------------------------------
 	//  Constructor
@@ -59,17 +57,17 @@ class CommandMap implements ICommandMap
 	 * Creates a new <code>CommandMap</code> object
 	 *
 	 * @param eventDispatcher The <code>IEventDispatcher</code> to listen to
-	 * @param injector An <code>IInjector</code> to use for this context
+	 * @param injector An <code>Injector</code> to use for this context
 	 * @param reflector An <code>IReflector</code> to use for this context
 	 */
-	public function new(eventDispatcher:IEventDispatcher, injector:IInjector, reflector:IReflector)
+	public function new(eventDispatcher:IEventDispatcher, injector:Injector, reflector:IReflector)
 	{
 		this.eventDispatcher = eventDispatcher;
 		this.injector = injector;
 		this.reflector = reflector;
-		this.eventTypeMap = new Dictionary<String, Dictionary<Class<Dynamic>,Dictionary<Class<Dynamic>, Dynamic>>>();
-		this.verifiedCommandClasses = new Register<Class<Dynamic>>();
-		this.detainedCommands = new Register<Dynamic>();
+		this.eventTypeMap = new Map<String, Map<Class<Dynamic>, Map<Class<Dynamic>, Dynamic>>>();
+		this.verifiedCommandClasses = new Array<Class<Dynamic>>();
+		this.detainedCommands = new Array<Dynamic>();
 	}
 	
 	//---------------------------------------------------------------------
@@ -79,24 +77,23 @@ class CommandMap implements ICommandMap
 	/**
 	 * @inheritDoc
 	 */
-	public function mapEvent(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic>=null, ?oneshot:Bool=false):Void
+	public function mapEvent(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic>=null, oneshot:Bool=false):Void
 	{
 		verifyCommandClass(commandClass);
-
 		if (eventClass == null) eventClass = Event;
 		
 		var eventClassMap = eventTypeMap.get(eventType);
 		if (eventClassMap == null)
 		{
-			eventClassMap = new Dictionary<Class<Dynamic>,Dictionary<Class<Dynamic>, Dynamic>>();
-			eventTypeMap.add(eventType, eventClassMap);
+			eventClassMap = new Map<Class<Dynamic>, Map<Class<Dynamic>, Dynamic>>();
+			eventTypeMap.set(eventType, eventClassMap);
 		}
-			
+
 		var callbacksByCommandClass = eventClassMap.get(eventClass);
 		if (callbacksByCommandClass == null)
 		{
-			callbacksByCommandClass = new Dictionary<Class<Dynamic>, Dynamic>();
-			eventClassMap.add(eventClass, callbacksByCommandClass);
+			callbacksByCommandClass = new Map<Class<Dynamic>, Dynamic>();
+			eventClassMap.set(eventClass, callbacksByCommandClass);
 		}
 			
 		if (callbacksByCommandClass.get(commandClass) != null)
@@ -105,25 +102,24 @@ class CommandMap implements ICommandMap
 		}
 		
 		var me = this;
-		var commandCallback = function(event:Event)
+		var callback = function(event:Event)
 		{
 			me.routeEventToCommand(event, commandClass, oneshot, eventClass);
 		};
 
-		eventDispatcher.addEventListener(eventType, commandCallback, false, 0, true);
-		callbacksByCommandClass.add(commandClass, commandCallback);
+		eventDispatcher.addEventListener(eventType, callback, false, 0, true);
+		callbacksByCommandClass.set(commandClass, callback);
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public function unmapEvent(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic> = null):Void
+	public function unmapEvent(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic> = null):Void
 	{
-		if (eventClass == null) eventClass = Event;
-
 		var eventClassMap = eventTypeMap.get(eventType);
 		if (eventClassMap == null) return;
-		
+
+		if (eventClass == null) eventClass = Event;
 		var callbacksByCommandClass = eventClassMap.get(eventClass);
 		if (callbacksByCommandClass == null) return;
 		
@@ -139,55 +135,51 @@ class CommandMap implements ICommandMap
 	 */
 	public function unmapEvents():Void
 	{
-		for (eventType in eventTypeMap)
+		for (eventType in eventTypeMap.keys())
 		{
 			var eventClassMap = eventTypeMap.get(eventType);
-			
-			for (eventClass in eventClassMap)
+			for (callbacksByCommandClass in eventClassMap)
 			{
-				var callbacksByCommandClass = eventClassMap.get(eventClass);
-
-				for (commandClass in callbacksByCommandClass)
+				for (callback in callbacksByCommandClass)
 				{
-					var commandCallback = callbacksByCommandClass.get(commandClass);
-					eventDispatcher.removeEventListener(eventType, commandCallback, false);
+					eventDispatcher.removeEventListener(eventType, callback, false);
 				}
 			}
 		}
 
-		eventTypeMap.empty();
+		eventTypeMap = new Map<String, Map<Class<Dynamic>, Map<Class<Dynamic>, Dynamic>>>();
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public function hasEventCommand(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic>=null):Bool
+	public function hasEventCommand(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic> = null):Bool
 	{
-		if (eventClass == null) eventClass = Event;
 
 		var eventClassMap = eventTypeMap.get(eventType);
 		if (eventClassMap == null) return false;
-		
+
+		if (eventClass == null) eventClass = Event;
 		var callbacksByCommandClass = eventClassMap.get(eventClass);
 		if (callbacksByCommandClass == null) return false;
 		
-		return callbacksByCommandClass.get(commandClass) != null;
+		return callbacksByCommandClass.exists(commandClass);
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public function execute(commandClass:Class<Dynamic>, ?payload:Dynamic=null, ?payloadClass:Class<Dynamic>=null, ?named:String=""):Void
+	public function execute(commandClass:Class<Dynamic>, payload:Dynamic = null, payloadClass:Class<Dynamic> = null, named:String = ""):Void
 	{
 		verifyCommandClass(commandClass);
 
 		if (payload != null || payloadClass != null)
 		{
-			if (payloadClass == null)
-			{
-				payloadClass = reflector.getClass(payload);
-			}
-			
+			payloadClass = (payloadClass != null) ? payloadClass : reflector.getClass(payload);
+
+			if (Std.is(payload, Event) && payloadClass != Event)
+				injector.mapValue(Event, payload);
+
 			injector.mapValue(payloadClass, payload, named);
 		}
 		
@@ -195,6 +187,9 @@ class CommandMap implements ICommandMap
 		
 		if (payload != null || payloadClass != null)
 		{
+			if (Std.is(payload, Event) && payloadClass != Event)
+				injector.unmap(Event);
+
 			injector.unmap(payloadClass, named);
 		}
 		
@@ -206,7 +201,7 @@ class CommandMap implements ICommandMap
 	 */
 	public function detain(command:Dynamic):Void
 	{
-		detainedCommands.add(command);
+		detainedCommands.push(command);
 	}
 	
 	/**
@@ -222,14 +217,14 @@ class CommandMap implements ICommandMap
 	 */
 	function verifyCommandClass(commandClass:Class<Dynamic>):Void
 	{
-		if (!verifiedCommandClasses.has(commandClass))
+		if (Lambda.has(verifiedCommandClasses, commandClass))
 		{
 			var fields = Type.getInstanceFields(commandClass);
 			var verified = Lambda.has(fields, "execute");
 			
 			if (verified)
 			{
-				verifiedCommandClasses.add(commandClass);
+				verifiedCommandClasses.push(commandClass);
 			}
 			else
 			{

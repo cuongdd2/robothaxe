@@ -7,10 +7,11 @@
 
 package robothaxe.mvcs.support;
 
-class ViewComponent
+import flash.display.DisplayObject;
+class ViewComponent extends DisplayObject
 {
 	public function new()
 	{
-		
+		super();
 	}
 }

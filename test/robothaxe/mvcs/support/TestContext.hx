@@ -6,16 +6,16 @@
 */
 package robothaxe.mvcs.support;
 
-import robothaxe.core.IInjector;
-import robothaxe.core.IViewContainer;
+import flash.display.DisplayObjectContainer;
+import robothaxe.injector.Injector;
 import robothaxe.mvcs.Context;
 
 class TestContext extends Context
 {
-	public var isInitialized(getIsInitialized, null):Bool;
+	public var isInitialized (get, null):Bool;
 	public var startupComplete:Bool ;
 	
-	public function new(?contextView:IViewContainer=null, ?autoStartup:Bool=true)
+	public function new(?contextView:DisplayObjectContainer=null, ?autoStartup:Bool=true)
 	{
 		startupComplete = false;
 		super(contextView, autoStartup);
@@ -27,12 +27,12 @@ class TestContext extends Context
 		super.startup();
 	}
 	
-	public function getInjector():IInjector
+	public function getInjector():Injector
 	{
 		return this.injector;
 	}
 	
-	public function getIsInitialized():Bool
+	public function get_isInitialized():Bool
 	{
 		var initialized:Bool = true;
 		initialized = (commandMap != null && initialized);

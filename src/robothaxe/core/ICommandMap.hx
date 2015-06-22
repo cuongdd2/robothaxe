@@ -39,7 +39,7 @@ interface ICommandMap
 	 * 
 	 * @throws robothaxe.base::ContextError
 	 */		
-	function execute(commandClass:Class<Dynamic>, ?payload:Dynamic = null, ?payloadClass:Class<Dynamic> = null, ?named:String = ''):Void;
+	function execute(commandClass:Class<Dynamic>, payload:Dynamic = null, payloadClass:Class<Dynamic> = null, named:String = ''):Void;
 	
 	/**
 	 * Map a Class to an Event type
@@ -53,7 +53,7 @@ interface ICommandMap
 	 * 
 	 * @throws robothaxe.base::ContextError
 	 */
-	function mapEvent(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic> = null, ?oneshot:Bool = false):Void;
+	function mapEvent(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic> = null, oneshot:Bool = false):Void;
 	
 	/**
 	 * Unmap a Class to Event type mapping
@@ -62,7 +62,7 @@ interface ICommandMap
 	 * @param commandClass The Class to unmap
 	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>flash.events.Event</code>.
 	 */
-	function unmapEvent(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic> = null):Void;
+	function unmapEvent(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic> = null):Void;
 	
 	/**
 	 * Removes all mappings made through <code>mapEvent</code>
@@ -77,5 +77,5 @@ interface ICommandMap
 	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>flash.events.Event</code>.
 	 * @return Whether the Class is mapped to this Event type
 	 */
-	function hasEventCommand(eventType:String, commandClass:Class<Dynamic>, ?eventClass:Class<Dynamic> = null):Bool;
+	function hasEventCommand(eventType:String, commandClass:Class<Dynamic>, eventClass:Class<Dynamic> = null):Bool;
 }

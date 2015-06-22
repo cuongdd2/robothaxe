@@ -86,8 +86,9 @@ class RTTI
 
 			switch (write)
 			{
-				case AccCall(m):
-				field.meta.add("setter", [Context.parse('"' + m + '"', ref.pos)], ref.pos);
+				case AccCall:
+//				field.meta.add("setter", [Context.parse('"' + m + '"', ref.pos)], ref.pos);
+				field.meta.add("setter", [Context.parse('"m"', ref.pos)], ref.pos);
 				default:
 			}
 

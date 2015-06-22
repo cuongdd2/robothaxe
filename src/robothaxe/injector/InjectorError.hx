@@ -7,17 +7,11 @@
 
 package robothaxe.injector;
 
-class InjectorError
+import openfl.errors.Error;
+class InjectorError extends Error
 {
-	public var message:String;
-	
-	public function new(message:String)
+	public function new(message:String = "", id:Int = 0)
 	{
-		this.message = message;
-	}
-
-	public function toString()
-	{
-		return message;
+		super(message, id);
 	}
 }

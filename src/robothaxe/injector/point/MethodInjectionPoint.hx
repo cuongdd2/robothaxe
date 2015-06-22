@@ -5,7 +5,7 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionpoints;
+package robothaxe.injector.point;
 
 import robothaxe.injector.InjectionConfig;
 import robothaxe.injector.Injector;
@@ -18,7 +18,7 @@ class MethodInjectionPoint extends InjectionPoint
 	var _parameterInjectionConfigs:Array<Dynamic>;
 	var requiredParameters:Int;
 	
-	public function new(meta:Dynamic, ?injector:Injector=null)
+	public function new(meta:Dynamic, injector:Injector=null)
 	{
 		requiredParameters = 0;
 		super(meta, injector);

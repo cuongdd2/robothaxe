@@ -5,13 +5,12 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 package robothaxe.mvcs.support;
-	
-import robothaxe.util.Dictionary;
-import robothaxe.core.IViewContainer;
 
-class TestContextView implements IViewContainer
+import flash.display.DisplayObjectContainer;
+
+class TestContextView implements DisplayObjectContainer
 {
-	var views:Dictionary<Dynamic, Bool>;
+	var views:Map<Dynamic, Bool>;
 
 	public var viewAdded:Dynamic -> Void;
 	public var viewRemoved:Dynamic -> Void;
@@ -21,7 +20,7 @@ class TestContextView implements IViewContainer
 	
 	public function new()
 	{
-		views = new Dictionary<Dynamic, Bool>();
+		views = new Map<Dynamic, Bool>();
 	}
 
 	public function addView(view:Dynamic)

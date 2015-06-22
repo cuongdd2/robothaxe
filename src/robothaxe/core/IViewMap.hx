@@ -7,7 +7,7 @@
 
 package robothaxe.core;
 
-import robothaxe.core.IViewContainer;
+import openfl.display.DisplayObjectContainer;
 
 /**
  * The Robotlegs ViewMap contract. All IViewMap automatic injections occur AFTER the view components are added to the stage.
@@ -63,12 +63,12 @@ interface IViewMap
 	 *
 	 * @return view The <code>IViewContainer</code> to use as scope for this <code>IViewMap</code>
 	 */
-	var contextView(default, set_contextView):IViewContainer;
+	var contextView (default, set):DisplayObjectContainer;
 	
 	/**
 	 * The <code>IViewMap</code>'s enabled status
 	 *
 	 * @return Whether the <code>IViewMap</code> is enabled
 	 */
-	var enabled(default, set_enabled):Bool;
+	var enabled (default, set):Bool;
 }

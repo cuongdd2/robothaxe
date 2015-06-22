@@ -6,10 +6,11 @@
 */
 package robothaxe.mvcs;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
-import robothaxe.core.IInjector;
-import robothaxe.core.IViewContainer;
+import flash.display.DisplayObjectContainer;
+import flash.events.IEventDispatcher;
+import openfl.events.Event;
+import robothaxe.injector.Injector;
+import openfl.events.IEventDispatcher;
 import robothaxe.mvcs.support.TestActor;
 import robothaxe.mvcs.support.TestContext;
 import robothaxe.base.support.TestContextView;
@@ -21,9 +22,9 @@ class ActorTest
  	public static var TEST_EVENT = "testEvent";
 
 	var context:TestContext;
-	var contextView:IViewContainer;
+	var contextView:DisplayObjectContainer;
 	var actor:TestActor;
-	var injector:IInjector;
+	var injector:Injector;
 	var eventDispatcher:IEventDispatcher;
 	var dispatched:Bool;
 	

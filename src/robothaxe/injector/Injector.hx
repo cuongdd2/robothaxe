@@ -7,64 +7,63 @@
 
 package robothaxe.injector;
 
-import robothaxe.core.IInjector;
-import robothaxe.injector.injectionpoints.ConstructorInjectionPoint;
-import robothaxe.injector.injectionpoints.InjectionPoint;
-import robothaxe.injector.injectionpoints.MethodInjectionPoint;
-import robothaxe.injector.injectionpoints.NoParamsConstructorInjectionPoint;
-import robothaxe.injector.injectionpoints.PostConstructInjectionPoint;
-import robothaxe.injector.injectionpoints.PropertyInjectionPoint;
-import robothaxe.injector.injectionresults.InjectClassResult;
-import robothaxe.injector.injectionresults.InjectOtherRuleResult;
-import robothaxe.injector.injectionresults.InjectSingletonResult;
-import robothaxe.injector.injectionresults.InjectValueResult;
-import robothaxe.util.Register;
+import openfl.system.ApplicationDomain;
+import Lambda;
+import robothaxe.injector.point.ConstructorInjectionPoint;
+import robothaxe.injector.point.InjectionPoint;
+import robothaxe.injector.point.MethodInjectionPoint;
+import robothaxe.injector.point.NoParamsConstructorInjectionPoint;
+import robothaxe.injector.point.PostConstructInjectionPoint;
+import robothaxe.injector.point.PropertyInjectionPoint;
+import robothaxe.injector.result.InjectClassResult;
+import robothaxe.injector.result.InjectOtherRuleResult;
+import robothaxe.injector.result.InjectSingletonResult;
+import robothaxe.injector.result.InjectValueResult;
 import haxe.rtti.Meta;
 
-class Injector implements IInjector
+class Injector
 {
-	//static var INJECTION_POINTS_CACHE = new Hash<Dynamic>();
-	public var attendedToInjectees(default, null):Register<Dynamic>;
-	public var parentInjector(default, set_parentInjector):Injector;
+	public var attendedToInjectees (default, null):Array<Dynamic>;
+	public var parentInjector (default, set):Injector;
+	public var applicationDomain(get, null): ApplicationDomain;
 
-	var m_parentInjector:Injector;
-	var m_mappings:Hash<Dynamic>;
-	var m_injecteeDescriptions:ClassHash<InjecteeDescription>;
+	var m_mappings:Map<String, Dynamic>;
+	var m_injecteeDescriptions:Map<Class<Dynamic>, InjecteeDescription>;
 	
 	public function new()
 	{
-		m_mappings = new Hash<Dynamic>();
-		m_injecteeDescriptions = new ClassHash<InjecteeDescription>();
-		attendedToInjectees = new Register<Dynamic>();
+		m_mappings = new Map<String, Dynamic>();
+		m_injecteeDescriptions = new Map<Class<Dynamic>, InjecteeDescription>();
+		attendedToInjectees = new Array<Dynamic>();
 	}
 	
-	public function mapValue(whenAskedFor:Class<Dynamic>, useValue:Dynamic, ?named:String = ""):Dynamic
+	public function mapValue(whenAskedFor:Class<Dynamic>, useValue:Dynamic, named:String = ""):InjectionConfig
 	{
 		var config = getMapping(whenAskedFor, named);
 		config.setResult(new InjectValueResult(useValue));
 		return config;
 	}
 	
-	public function mapClass(whenAskedFor:Class<Dynamic>, instantiateClass:Class<Dynamic>, ?named:String=""):Dynamic
+	public function mapClass(whenAskedFor:Class<Dynamic>, instantiateClass:Class<Dynamic>, named:String=""):InjectionConfig
 	{
 		var config = getMapping(whenAskedFor, named);
 		config.setResult(new InjectClassResult(instantiateClass));
 		return config;
 	}
 	
-	public function mapSingleton(whenAskedFor :Class<Dynamic>, ?named:String="") :Dynamic
+	public function mapSingleton(whenAskedFor :Class<Dynamic>, named:String="") :InjectionConfig
 	{
 		return mapSingletonOf(whenAskedFor, whenAskedFor, named);
 	}
 	
-	public function mapSingletonOf(whenAskedFor:Class<Dynamic>, useSingletonOf:Class<Dynamic>, ?named:String=""):Dynamic
+	public function mapSingletonOf(whenAskedFor:Class<Dynamic>, useSingletonOf:Class<Dynamic>, named:String=""):InjectionConfig
 	{
 		var config = getMapping(whenAskedFor, named);
 		config.setResult(new InjectSingletonResult(useSingletonOf));
 		return config;
 	}
 	
-	public function mapRule(whenAskedFor:Class<Dynamic>, useRule:Dynamic, ?named:String = ""):Dynamic
+	public function mapRule(whenAskedFor:Class<Dynamic>, useRule:Dynamic, named:String = ""):Dynamic
 	{
 		var config = getMapping(whenAskedFor, named);
 		config.setResult(new InjectOtherRuleResult(useRule));
@@ -77,7 +76,7 @@ class Injector implements IInjector
 		else return Type.getClassName(forClass);
 	}
 
-	public function getMapping(forClass:Class<Dynamic>, ?named:String=""):Dynamic
+	public function getMapping(forClass:Class<Dynamic>, named:String=""):InjectionConfig
 	{
 		var requestName = getClassName(forClass) + "#" + named;
 		
@@ -93,95 +92,100 @@ class Injector implements IInjector
 	
 	public function injectInto(target:Dynamic):Void
 	{
-		if (attendedToInjectees.has(target))
+		if (Lambda.has(attendedToInjectees, target))
 		{
 			return;
 		}
 
-		attendedToInjectees.add(target);
+		attendedToInjectees.push(target);
 		
 		//get injection points or cache them if this target's class wasn't encountered before
 		var targetClass = Type.getClass(target);
 
 		var injecteeDescription:InjecteeDescription = null;
-
-		if (m_injecteeDescriptions.exists(targetClass))
-		{
-			injecteeDescription = m_injecteeDescriptions.get(targetClass);
-		}
-		else
-		{
-			injecteeDescription = getInjectionPoints(targetClass);
-		}
+		injecteeDescription = m_injecteeDescriptions.exists(targetClass) ?
+			m_injecteeDescriptions.get(targetClass) :
+			getInjectionPoints(targetClass);
 
 		if (injecteeDescription == null) return;
 
-		var injectionPoints:Array<Dynamic> = injecteeDescription.injectionPoints;
-		var length:Int = injectionPoints.length;
-		
-		for (i in 0...length)
-		{
-			var injectionPoint:InjectionPoint = injectionPoints[i];
+		for (injectionPoint in injecteeDescription.injectionPoints)
 			injectionPoint.applyInjection(target, this);
-		}
 	}
 	
 	public function instantiate<T>(forClass:Class<T>):T
 	{
-		var injecteeDescription:InjecteeDescription;
-
-		if (m_injecteeDescriptions.exists(forClass))
-		{
-			injecteeDescription = m_injecteeDescriptions.get(forClass);
-		}
-		else
-		{
-			injecteeDescription = getInjectionPoints(forClass);
-		}
-
+		var injecteeDescription = m_injecteeDescriptions.exists(forClass) ?
+			m_injecteeDescriptions.get(forClass) :
+			getInjectionPoints(forClass);
 		var injectionPoint:InjectionPoint = injecteeDescription.ctor;
 		var instance:Dynamic = injectionPoint.applyInjection(forClass, this);
 		injectInto(instance);
-
 		return instance;
 	}
 	
-	public function unmap(theClass:Class<Dynamic>, ?named:String=""):Void
+	public function unmap(theClass:Class<Dynamic>, named:String=""):Void
 	{
 		var mapping = getConfigurationForRequest(theClass, named);
-		
 		if (mapping == null)
 		{
-			throw new InjectorError('Error while removing an injector mapping: No mapping defined for class ' + getClassName(theClass) + ', named "' + named + '"');
+			throw new InjectorError('Error while removing an injector mapping: No mapping defined for class ' +
+			getClassName(theClass) + ', named "' + named + '"');
 		}
-
 		mapping.setResult(null);
 	}
 
-	public function hasMapping(forClass:Class<Dynamic>, ?named :String = '') :Bool
+	public function hasMapping(forClass:Class<Dynamic>, named :String = '') :Bool
 	{
 		var mapping = getConfigurationForRequest(forClass, named);
-		
 		if (mapping == null)
 		{
 			return false;
 		}
-
 		return mapping.hasResponse(this);
 	}
 
-	public function getInstance<T>(ofClass:Class<T>, ?named:String=""):T
+	public function getInstance<T>(ofClass:Class<T>, named:String=""):T
 	{
 		var mapping = getConfigurationForRequest(ofClass, named);
 		
 		if (mapping == null || !mapping.hasResponse(this))
 		{
-			throw new InjectorError('Error while getting mapping response: No mapping defined for class ' + getClassName(ofClass) + ', named "' + named + '"');
+			throw new InjectorError('Error while getting mapping response: No mapping defined for class ' +
+			getClassName(ofClass) + ', named "' + named + '"');
 		}
-
 		return mapping.getResponse(this);
 	}
-	
+
+	public function createChildInjector(applicationDomain:ApplicationDomain = null):Injector
+	{
+		var injector = new Injector();
+		injector.applicationDomain = applicationDomain;
+		injector.parentInjector = this;
+		return injector;
+	}
+
+	function get_applicationDomain():ApplicationDomain
+	{
+		return applicationDomain != null ? applicationDomain : ApplicationDomain.currentDomain;
+	}
+
+	public function getAncestorMapping(forClass:Class<Dynamic>, named:String=null):InjectionConfig
+	{
+		var parent = parentInjector;
+
+		while (parent != null)
+		{
+			var parentConfig = parent.getConfigurationForRequest(forClass, named, false);
+			if (parentConfig != null && parentConfig.hasOwnResponse())
+			{
+				return parentConfig;
+			}
+			parent = parent.parentInjector;
+		}
+		return null;
+	}
+
 	function getInjectionPoints(forClass:Class<Dynamic>):InjecteeDescription
 	{
 		var typeMeta = Meta.getType(forClass);
@@ -253,21 +257,16 @@ class Injector implements IInjector
 		return injecteeDescription;
 	}
 
-	function getConfigurationForRequest(forClass:Class<Dynamic>, named:String, ?traverseAncestors:Bool=true):InjectionConfig
+	function getConfigurationForRequest(forClass:Class<Dynamic>, named:String, traverseAncestors:Bool=true):InjectionConfig
 	{
 		var requestName = getClassName(forClass) + '#' + named;
-		
-		if(!m_mappings.exists(requestName))
+		var config = m_mappings.get(requestName);
+		if(config == null && traverseAncestors &&
+			parentInjector != null && parentInjector.hasMapping(forClass, named))
 		{
-			if (traverseAncestors && parentInjector != null && parentInjector.hasMapping(forClass, named))
-			{
-				return getAncestorMapping(forClass, named);
-			}
-
-			return null;
+			config = getAncestorMapping(forClass, named);
 		}
-
-		return m_mappings.get(requestName);
+		return config;
 	}
 	/* pretty sure this is only used by xml config, which we don't use.
 	function addParentInjectionPoints(description:Classdef, injectionPoints:Array<Dynamic>):Void
@@ -300,45 +299,17 @@ class Injector implements IInjector
 		//restore own map of worked injectees if parent injector is removed
 		if (parentInjector != null && value == null)
 		{
-			attendedToInjectees = new Register<Dynamic>();
+			attendedToInjectees = new Array<Dynamic>();
 		}
-
 		parentInjector = value;
-
 		//use parent's map of worked injectees
 		if (parentInjector != null)
 		{
 			attendedToInjectees = parentInjector.attendedToInjectees;
 		}
-
 		return parentInjector;
 	}
 
-	public function createChildInjector():IInjector
-	{
-		var injector = new Injector();
-		injector.parentInjector = this;
-		return injector;
-	}
-
-	public function getAncestorMapping(forClass:Class<Dynamic>, named:String=null):InjectionConfig
-	{
-		var parent = parentInjector;
-
-		while (parent != null)
-		{
-			var parentConfig = parent.getConfigurationForRequest(forClass, named, false);
-
-			if (parentConfig != null && parentConfig.hasOwnResponse())
-			{
-				return parentConfig;
-			}
-
-			parent = parent.parentInjector;
-		}
-		
-		return null;
-	}
 
 	function getFields(type:Class<Dynamic>)
 	{
@@ -362,11 +333,11 @@ class Injector implements IInjector
 
 class ClassHash<T>
 {
-	var hash:Hash<T>;
+	var hash:Map<String,T>;
 
 	public function new()
 	{
-		hash = new Hash<T>();
+		hash = new Map<String,T>();
 	}
 
 	public function set(key:Class<Dynamic>, value:T):Void

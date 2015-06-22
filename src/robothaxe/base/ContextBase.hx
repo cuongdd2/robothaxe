@@ -7,21 +7,21 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.event.EventDispatcher;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.EventDispatcher;
+import openfl.events.IEventDispatcher;
 
 import robothaxe.core.IContext;
 	
 /**
  * An abstract <code>IContext</code> implementation
  */
-class ContextBase implements IContext, implements IEventDispatcher
+class ContextBase implements IContext implements IEventDispatcher
 {
 	/**
 	 * @private
 	 */
-	public var eventDispatcher(default, null):IEventDispatcher;
+	public var eventDispatcher (default, null):IEventDispatcher;
 	
 	//---------------------------------------------------------------------
 	//  Constructor
@@ -36,7 +36,7 @@ class ContextBase implements IContext, implements IEventDispatcher
 	{
 		eventDispatcher = new EventDispatcher(this);
 	}
-	
+
 	//---------------------------------------------------------------------
 	//  EventDispatcher Boilerplate
 	//---------------------------------------------------------------------
@@ -44,7 +44,7 @@ class ContextBase implements IContext, implements IEventDispatcher
 	/**
 	 * @private
 	 */
-	public function addEventListener(type:String, listener:Dynamic -> Void, ?useCapture:Bool = false, ?priority:Int = 0, ?useWeakReference:Bool = false):Void
+	public function addEventListener(type:String, listener:Dynamic -> Void, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = false):Void
 	{
 		eventDispatcher.addEventListener(type, listener, useCapture, priority);
 	}
@@ -70,7 +70,7 @@ class ContextBase implements IContext, implements IEventDispatcher
 	/**
 	 * @private
 	 */
-	public function removeEventListener(type:String, listener:Dynamic -> Void, ?useCapture:Bool = false):Void
+	public function removeEventListener(type:String, listener:Dynamic -> Void, useCapture:Bool = false):Void
 	{
 		eventDispatcher.removeEventListener(type, listener, useCapture);
 	}

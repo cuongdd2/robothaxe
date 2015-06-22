@@ -7,12 +7,12 @@
 
 package robothaxe.mvcs;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
+import robothaxe.injector.Injector;
+import openfl.display.DisplayObjectContainer;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 import robothaxe.core.ICommandMap;
-import robothaxe.core.IInjector;
 import robothaxe.core.IMediatorMap;
-import robothaxe.core.IViewContainer;
 
 /**
  * Abstract MVCS command implementation
@@ -20,7 +20,7 @@ import robothaxe.core.IViewContainer;
 class Command
 {
 	@inject
-	public var contextView:IViewContainer;
+	public var contextView:DisplayObjectContainer;
 	
 	@inject
 	public var commandMap:ICommandMap;
@@ -29,7 +29,7 @@ class Command
 	public var eventDispatcher:IEventDispatcher;
 	
 	@inject
-	public var injector:IInjector;
+	public var injector:Injector;
 	
 	@inject
 	public var mediatorMap:IMediatorMap;
@@ -50,10 +50,10 @@ class Command
 	 *
 	 * @param event The <code>Event</code> to dispatch on the <code>IContext</code>'s <code>IEventDispatcher</code>
 	 */
-		function dispatch(event:Event):Bool
-		{
-		    if(eventDispatcher.hasEventListener(event.type))
-		        return eventDispatcher.dispatchEvent(event);
-		 	return false;  
-		}
+	function dispatch(event:Event):Bool
+	{
+		if(eventDispatcher.hasEventListener(event.type))
+			return eventDispatcher.dispatchEvent(event);
+		return false;
+	}
 }

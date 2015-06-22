@@ -1,6 +1,6 @@
 ﻿package robothaxe.mvcs.support;
 
-import robothaxe.event.Event;
+import openfl.events.Event;
 
 class CustomEvent extends Event
 {

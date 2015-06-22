@@ -7,21 +7,20 @@
 
 package robothaxe.base;
 
+import flash.display.DisplayObjectContainer;
 import massive.munit.Assert;
 import massive.munit.async.AsyncFactory;
 
-import robothaxe.event.Event;
-import robothaxe.event.EventDispatcher;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.EventDispatcher;
+import openfl.events.IEventDispatcher;
 
 import robothaxe.core.IEventMap;
-import robothaxe.core.IInjector;
 import robothaxe.injector.Injector;
 import robothaxe.injector.Reflector;
 import robothaxe.core.IMediator;
 import robothaxe.core.IMediatorMap;
 import robothaxe.core.IReflector;
-import robothaxe.core.IViewContainer;
 import robothaxe.mvcs.support.TestContextView;
 import robothaxe.mvcs.support.TestContextViewMediator;
 import robothaxe.mvcs.support.ViewComponent;
@@ -39,7 +38,7 @@ class MediatorMapTest
 	var eventDispatcher:IEventDispatcher;
 	var commandExecuted:Bool;
 	var mediatorMap:MediatorMap;
-	var injector:IInjector;
+	var injector:Injector;
 	var reflector:IReflector;
 	var eventMap:IEventMap;
 	
@@ -52,8 +51,8 @@ class MediatorMapTest
 		reflector = new Reflector();
 		mediatorMap = new MediatorMap(contextView, injector, reflector);
 		
-		injector.mapValue(IViewContainer, contextView);
-		injector.mapValue(IInjector, injector);
+		injector.mapValue(DisplayObjectContainer, contextView);
+		injector.mapValue(Injector, injector);
 		injector.mapValue(IEventDispatcher, eventDispatcher);
 		injector.mapValue(IMediatorMap, mediatorMap);
 	}
@@ -70,7 +69,7 @@ class MediatorMapTest
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, false);
 		
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var mediator = mediatorMap.createMediator(viewComponent);
 		var hasMapping = mediatorMap.hasMapping(ViewComponent);
@@ -86,7 +85,7 @@ class MediatorMapTest
 		mediatorMap.mapView(ViewComponent, ViewMediator, ViewComponent, false, false);
 		
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var mediator:IMediator = mediatorMap.createMediator(viewComponent);
 		var exactMediator:ViewMediator = cast( mediator, ViewMediator);
@@ -104,7 +103,7 @@ class MediatorMapTest
 		mediatorMap.mapView(ViewComponent, ViewMediator, [ViewComponent], false, false);
 
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var mediator:IMediator = mediatorMap.createMediator(viewComponent);
 		var exactMediator:ViewMediator = cast( mediator, ViewMediator);
@@ -122,7 +121,7 @@ class MediatorMapTest
 		mediatorMap.mapView(ViewComponentAdvanced, ViewMediatorAdvanced, [ViewComponent, ViewComponentAdvanced], false, false);
 		
 		var viewComponentAdvanced:ViewComponentAdvanced = new ViewComponentAdvanced();
-		contextView.addView(viewComponentAdvanced);
+		contextView.addChild(viewComponentAdvanced);
 
 		var mediator:IMediator = mediatorMap.createMediator(viewComponentAdvanced);
 		var exactMediator:ViewMediatorAdvanced = cast( mediator, ViewMediatorAdvanced);
@@ -142,7 +141,7 @@ class MediatorMapTest
 		var viewComponent:ViewComponent = new ViewComponent();
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, false);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 
 		var mediator:IMediator = mediatorMap.createMediator(viewComponent);
 		
@@ -162,7 +161,7 @@ class MediatorMapTest
 		var viewComponent:ViewComponent = new ViewComponent();
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, false);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var mediator:IMediator = mediatorMap.createMediator(viewComponent);
 
@@ -181,7 +180,7 @@ class MediatorMapTest
 	{
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, true, true);
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		Assert.isTrue(mediatorMap.hasMediatorForView(viewComponent));//'Mediator should have been created for View Component'
 	}
 	
@@ -191,7 +190,7 @@ class MediatorMapTest
 		var viewComponent = new ViewComponent();
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, true);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var mediator = mediatorMap.createMediator(viewComponent);
 		
@@ -206,15 +205,15 @@ class MediatorMapTest
 	// 	var viewComponent = new ViewComponent();
 		
 	// 	mediatorMap.mapView(ViewComponent, ViewMediator, null, false, true);
-	// 	contextView.addView(viewComponent);
+	// 	contextView.addChild(viewComponent);
 		
 	// 	var mediator = mediatorMap.createMediator(viewComponent);
 		
 	// 	contextView.removeView(viewComponent);
-	// 	contextView.addView(viewComponent);
+	// 	contextView.addChild(viewComponent);
 		
 	// 	var data = {view:viewComponent, mediator: mediator};
-	// 	var handler = factory.createHandler(this, callback(verifyMediatorSurvival, data), 300);
+	// 	var handler = factory.createHandler(this, verifyMediatorSurvival.bind(data), 300);
 	// 	haxe.Timer.delay(handler, 200);
 	// }
 	
@@ -233,7 +232,7 @@ class MediatorMapTest
 		var mediator:IMediator;
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, true);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		mediator = mediatorMap.createMediator(viewComponent);
 
 		Assert.isNotNull(mediator);//'Mediator should have been created'
@@ -248,13 +247,13 @@ class MediatorMapTest
 		var mediator:IMediator;
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, false, true);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		mediator = mediatorMap.createMediator(viewComponent);
 		
 		contextView.removeView(viewComponent);
 		
 		var data = {view: viewComponent, mediator: mediator};
-		var handler = factory.createHandler(this, callback(verifyMediatorRemoval, data), 300);
+		var handler = factory.createHandler(this, verifyMediatorRemoval.bind(data), 300);
 		haxe.Timer.delay(handler, 200);
 	}
 	
@@ -288,7 +287,7 @@ class MediatorMapTest
 		mediatorMap.unmapView(ViewComponent);
 
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 		
 		var hasMediator = mediatorMap.hasMediatorForView(viewComponent);
 		var hasMapping = mediatorMap.hasMapping(ViewComponent);
@@ -304,13 +303,13 @@ class MediatorMapTest
 		mediatorMap.unmapView(ViewComponent);
 
 		var viewComponent = new ViewComponent();
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 
 		Assert.isFalse(mediatorMap.hasMediatorForView(viewComponent));//'Mediator should NOT have been created for View Component'
 		contextView.removeView(viewComponent);
 		
 		mediatorMap.mapView(ViewComponent, ViewMediator, null, true, true);
-		contextView.addView(viewComponent);
+		contextView.addChild(viewComponent);
 
 		Assert.isTrue(mediatorMap.hasMediatorForView(viewComponent));//'Mediator should have been created for View Component'
 	}

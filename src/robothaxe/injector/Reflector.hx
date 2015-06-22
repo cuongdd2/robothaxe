@@ -7,13 +7,15 @@
 
 package robothaxe.injector;
 
+import openfl.system.ApplicationDomain;
 import robothaxe.core.IReflector;
 
 class Reflector implements IReflector
  {
 	public function new(){}
 
-	public function classExtendsOrImplements(classOrClassName:Dynamic, superClass:Class<Dynamic>):Bool
+	public function classExtendsOrImplements(classOrClassName:Dynamic, superClass:Class<Dynamic>,
+                                             applicationDomain:ApplicationDomain = null):Bool
 	{
         var actualClass:Class<Dynamic> = null;
 		
@@ -42,7 +44,7 @@ class Reflector implements IReflector
         return Std.is(classInstance, superClass);
 	}
 
-	public function getClass(value:Dynamic):Class<Dynamic>
+	public function getClass(value:Dynamic, applicationDomain:ApplicationDomain = null):Class<Dynamic>
 	{
 		if (Std.is(value, Class))
 		{
@@ -52,7 +54,7 @@ class Reflector implements IReflector
 		return Type.getClass(value);
 	}
 	
-	public function getFQCN(value:Dynamic):String
+	public function getFQCN(value:Dynamic, replaceColons:Bool = false):String
 	{
 		var fqcn:String;
 

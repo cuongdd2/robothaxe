@@ -7,8 +7,8 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 
 import robothaxe.core.IEventMap;
 
@@ -20,12 +20,12 @@ class EventMap implements IEventMap
 	/**
 	 * The <code>IEventDispatcher</code>
 	 */
-	
-	public var dispatcherListeningEnabled:Bool;
+	var eventDispatcher:IEventDispatcher;
+
 	/**
 	 * The <code>IEventDispatcher</code>
 	 */
-	var eventDispatcher:IEventDispatcher;
+	public var dispatcherListeningEnabled:Bool;
 	
 	/**
 	 * @private
@@ -59,12 +59,12 @@ class EventMap implements IEventMap
 	 * @param dispatcher The <code>IEventDispatcher</code> to listen to
 	 * @param type The <code>Event</code> type to listen for
 	 * @param listener The <code>Event</code> handler
-	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>robothaxe.event.Event</code>.
+	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>openfl.events.Event</code>.
 	 * @param useCapture
 	 * @param priority
 	 * @param useWeakReference
 	 */
-	public function mapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, ?eventClass:Class<Dynamic>=null, ?useCapture:Bool=false, ?priority:Int=0, ?useWeakReference:Bool=true):Void
+	public function mapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, eventClass:Class<Dynamic>=null, useCapture:Bool=false, priority:Int=0, useWeakReference:Bool=true):Void
 	{
 		if (dispatcherListeningEnabled == false && dispatcher == eventDispatcher)
 		{
@@ -72,9 +72,12 @@ class EventMap implements IEventMap
 		}
 
 		if (eventClass == null) eventClass = Event;
-		
-		for (params in listeners)
+
+		var params:Dynamic;
+		var i = listeners.length;
+		while (i-- > 0)
 		{
+			params = listeners[i];
 			if (params.dispatcher == dispatcher
 				&& params.type == type
 				&& Reflect.compareMethods(params.listener, listener)
@@ -86,23 +89,13 @@ class EventMap implements IEventMap
 		}
 		
 		var me = this;
-		var eventCallback:Dynamic = function(event:Event)
+		var callback:Dynamic = function(event:Event)
 		{
 			me.routeEventToListener(event, listener, eventClass);
 		};
 
-		var params =
-		{
-			dispatcher: dispatcher,
-			type: type,
-			listener: listener,
-			eventClass: eventClass,
-			eventCallback: eventCallback,
-			useCapture: useCapture
-		};
-
 		listeners.push(params);
-		dispatcher.addEventListener(type, eventCallback, useCapture, priority, useWeakReference);
+		dispatcher.addEventListener(type, callback, useCapture, priority, useWeakReference);
 	}
 	
 	/**
@@ -112,10 +105,10 @@ class EventMap implements IEventMap
 	 * @param dispatcher The <code>IEventDispatcher</code>
 	 * @param type The <code>Event</code> type
 	 * @param listener The <code>Event</code> handler
-	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>robothaxe.event.Event</code>.
+	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>openfl.events.Event</code>.
 	 * @param useCapture
 	 */
-	public function unmapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, ?eventClass:Class<Dynamic> = null, ?useCapture:Bool = false):Void
+	public function unmapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, eventClass:Class<Dynamic> = null, useCapture:Bool = false):Void
 	{
 		if (eventClass == null) eventClass = Event;
 		
@@ -131,7 +124,7 @@ class EventMap implements IEventMap
 				&& params.eventClass == eventClass)
 			{
 				dispatcher.removeEventListener(type, params.eventCallback, useCapture);
-				listeners.splice(i, 1);
+				listeners.remove(params);
 				return;
 			}
 		}

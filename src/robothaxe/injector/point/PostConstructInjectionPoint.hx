@@ -5,27 +5,36 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionpoints;
+package robothaxe.injector.point;
 
 import robothaxe.injector.Injector;
+import haxe.rtti.CType;
 
-class ConstructorInjectionPoint extends MethodInjectionPoint
+class PostConstructInjectionPoint extends InjectionPoint
 {
-	public function new(meta:Dynamic, forClass:Class<Dynamic>, ?injector:Injector=null)
+	public var order (default, null):Int;
+	
+	var methodName:String;
+	
+	public function new(meta:Dynamic, injector:Injector=null)
 	{
+		order = 0;
 		super(meta, injector);
 	}
 	
 	public override function applyInjection(target:Dynamic, injector:Injector):Dynamic
 	{
-		var ofClass:Class<Dynamic> = target;
-		var withArgs:Array<Dynamic> = gatherParameterValues(target, injector);
-		return Type.createInstance(ofClass, withArgs);
+		Reflect.callMethod(target, Reflect.field(target, methodName), []);
+		return target;
 	}
-
+	
 	override function initializeInjection(meta:Dynamic):Void
 	{
-		methodName = "new";
-		gatherParameters(meta);
+		methodName = meta.name[0];
+
+		if (meta.post != null)
+		{
+			order = meta.post[0];
+		}
 	}
 }

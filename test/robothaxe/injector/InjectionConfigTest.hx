@@ -2,10 +2,10 @@ package robothaxe.injector;
 
 import massive.munit.Assert;
 
-import robothaxe.injector.injectionresults.InjectClassResult;
-import robothaxe.injector.injectionresults.InjectOtherRuleResult;
-import robothaxe.injector.injectionresults.InjectSingletonResult;
-import robothaxe.injector.injectionresults.InjectValueResult;
+import robothaxe.injector.result.InjectClassResult;
+import robothaxe.injector.result.InjectOtherRuleResult;
+import robothaxe.injector.result.InjectSingletonResult;
+import robothaxe.injector.result.InjectValueResult;
 import robothaxe.injector.support.types.Class1;
 import robothaxe.injector.support.types.Class1Extension;
 

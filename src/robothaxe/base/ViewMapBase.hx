@@ -7,22 +7,22 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.core.IInjector;
-import robothaxe.core.IViewContainer;
+import openfl.display.DisplayObjectContainer;
+import openfl.events.Event;
+import robothaxe.injector.Injector;
 
 /**
  * A base ViewMap implementation
  */
 class ViewMapBase
 {
-	public var contextView(default, set_contextView):IViewContainer;
-	public var enabled(default, set_enabled):Bool;
+	public var contextView (default, set):DisplayObjectContainer;
+	public var enabled (default, set):Bool;
 	
 	/**
 	 * @private
 	 */
-	var injector:IInjector;
+	var injector:Injector;
 
 	/**
 	 * @private
@@ -44,7 +44,7 @@ class ViewMapBase
 	 * @param contextView The root view node of the context. The map will listen for ADDED_TO_STAGE events on this node
 	 * @param injector An <code>IInjector</code> to use for this context
 	 */
-	public function new(contextView:IViewContainer, injector:IInjector)
+	public function new(contextView:DisplayObjectContainer, injector:Injector)
 	{
 		viewListenerCount = 0;
 		enabled = true;
@@ -65,20 +65,15 @@ class ViewMapBase
 	/**
 	 * @inheritDoc
 	 */
-	public function set_contextView(value:IViewContainer):IViewContainer
+	public function set_contextView(value:DisplayObjectContainer):DisplayObjectContainer
 	{
 		if (value != contextView)
 		{
 			removeListeners();
-			
 			contextView = value;
-
 			if (viewListenerCount > 0)
-			{
 				addListeners();
-			}
 		}
-		
 		return contextView;
 	}
 
@@ -90,16 +85,11 @@ class ViewMapBase
 		if (value != enabled)
 		{
 			removeListeners();
-			
 			enabled = value;
-			
 			if (viewListenerCount > 0)
-			{
 				addListeners();
-			}
 		}
-
-		return value;
+		return enabled;
 	}
 
 	//---------------------------------------------------------------------
@@ -123,14 +113,14 @@ class ViewMapBase
 	/**
 	 * @private
 	 */
-	function onViewAdded(view:Dynamic):Void
+	function onViewAdded(e:Event):Void
 	{
 	}
 
 	/**
 	 * @private
 	 */
-	function onViewRemoved(view:Dynamic):Void
+	function onViewRemoved(e:Event):Void
 	{
 	}
 }

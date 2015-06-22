@@ -7,11 +7,10 @@
 
 package robothaxe.core;
 
-import robothaxe.core.IViewContainer;
-
 /**
  * The Robotlegs MediatorMap contract
  */
+import openfl.display.DisplayObjectContainer;
 interface IMediatorMap
 {
 	
@@ -24,7 +23,7 @@ interface IMediatorMap
 	 * @param autoCreate Automatically construct and register an instance of Class <code>mediatorClass</code> when an instance of Class <code>viewClass</code> is detected
 	 * @param autoRemove Automatically remove an instance of Class <code>mediatorClass</code> when its <code>viewClass</code> leaves the ancestory of the context view
 	 */
-	function mapView(viewClassOrName:Dynamic, mediatorClass:Class<Dynamic>, ?injectViewAs:Dynamic = null, ?autoCreate:Bool = true, ?autoRemove:Bool = true):Void;
+	function mapView(viewClassOrName:Dynamic, mediatorClass:Class<Dynamic>, injectViewAs:Dynamic = null, autoCreate:Bool = true, autoRemove:Bool = true):Void;
 	
 	/**
 	 * Unmap a view Class
@@ -109,12 +108,12 @@ interface IMediatorMap
 	 *
 	 * @return view The <code>IViewContainer</code> to use as scope for this <code>IMediatorMap</code>
 	 */
-	var contextView(default, set_contextView):IViewContainer;
+	var contextView (default, set):DisplayObjectContainer;
 	
 	/**
 	 * The <code>IMediatorMap</code>'s enabled status
 	 * 
 	 * @return Whether the <code>IMediatorMap</code> is enabled
 	 */		
-	var enabled(default, set_enabled):Bool;
+	var enabled (default, set):Bool;
 }

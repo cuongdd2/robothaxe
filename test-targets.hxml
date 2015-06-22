@@ -1,15 +1,6 @@
 -main TestMain
 -cp src
 -cp test
--lib munit
+-lib munit openfl
 -swf output/test/as3_test.swf
---macro RTTI.generate()
-
---next
-
--main TestMain
--cp src
--cp test
--lib munit
--js output/test/js_test.js
 --macro RTTI.generate()

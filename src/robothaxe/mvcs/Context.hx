@@ -7,8 +7,11 @@
 
 package robothaxe.mvcs;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
+import openfl.system.ApplicationDomain;
+import robothaxe.base.ContextError;
+import openfl.display.DisplayObjectContainer;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 import robothaxe.base.CommandMap;
 import robothaxe.base.ContextBase;
 import robothaxe.base.ContextEvent;
@@ -18,11 +21,9 @@ import robothaxe.base.ViewMap;
 import robothaxe.core.ICommandMap;
 import robothaxe.core.IContext;
 import robothaxe.core.IEventMap;
-import robothaxe.core.IInjector;
 import robothaxe.core.IMediatorMap;
 import robothaxe.core.IReflector;
 import robothaxe.core.IViewMap;
-import robothaxe.core.IViewContainer;
 import robothaxe.injector.Injector;
 import robothaxe.injector.Reflector;
 
@@ -56,25 +57,25 @@ import robothaxe.injector.Reflector;
  * 
  * @see #startup()
  */
-/*[Event(name="startupComplete", type="robothaxe.base.ContextEvent")]*/
+@:meta(Event(name="startupComplete", type="robothaxe.base.ContextEvent"))
 
 
 /**
  * Abstract MVCS <code>IContext</code> implementation
  */
-class Context extends ContextBase, implements IContext
+class Context extends ContextBase implements IContext
 {
-	public var contextView(default, set_contextView):IViewContainer;
-	
-	public var commandMap(get_commandMap, null):ICommandMap;
+	public var injector (get, null):Injector;
 
-	public var injector(get_injector, null):IInjector;
-	
-	public var mediatorMap(get_mediatorMap, null):IMediatorMap;
-	
-	public var reflector(get_reflector, null):IReflector;
-	
-	public var viewMap(get_viewMap, null):IViewMap;
+	public var reflector (get, null):IReflector;
+
+	public var contextView (default, set):DisplayObjectContainer;
+
+	public var commandMap (get, null):ICommandMap;
+
+	public var mediatorMap (get, null):IMediatorMap;
+
+	public var viewMap (get, null):IViewMap;
 	
 	/**
 	 * @private
@@ -93,12 +94,17 @@ class Context extends ContextBase, implements IContext
 	 * @param contextView The root view node of the context. The context will listen for ADDED_TO_STAGE events on this node
 	 * @param autoStartup Should this context automatically invoke it's <code>startup</code> method when it's <code>contextView</code> arrives on Stage?
 	 */
-	public function new(?contextView:IViewContainer = null, ?autoStartup:Bool = true)
+	public function new(contextView:DisplayObjectContainer = null, autoStartup:Bool = true)
 	{
 		super();
 
 		this.autoStartup = autoStartup;
 		this.contextView = contextView;
+
+		if(contextView != null) {
+			mapInjections();
+			checkAutoStartup();
+		}
 	}
 	
 	//---------------------------------------------------------------------
@@ -136,33 +142,33 @@ class Context extends ContextBase, implements IContext
 	/**
 	 * @private
 	 */
-	public function set_contextView(value:IViewContainer):IViewContainer
+	public function set_contextView(value:DisplayObjectContainer):DisplayObjectContainer
 	{
-		if (contextView != value)
-		{
-			contextView = value;
-			// Hack: We have to clear these out and re-map them
-			commandMap = null;
-			mediatorMap = null;
-			viewMap = null;
+		if (value == contextView)
+			return value;
 
-			mapInjections();
-			checkAutoStartup();
-		}
+		if (contextView != null)
+			throw new ContextError(ContextError.E_CONTEXT_VIEW_OVR);
+
+		contextView = value;
+
+		// Hack: We have to clear these out and re-map them
+		/*commandMap = null;
+		mediatorMap = null;
+		viewMap = null;*/
+
+		mapInjections();
+		checkAutoStartup();
 
 		return value;
 	}
 	
 	/**
-	 * The <code>IInjector</code> for this <code>IContext</code>
+	 * The <code>Injector</code> for this <code>IContext</code>
 	 */
-	function get_injector():IInjector
+	function get_injector():Injector
 	{
-		if (injector == null)
-		{
-			return createInjector();
-		}
-
+		if (injector == null) return createInjector();
 		return injector;
 	}
 	
@@ -171,11 +177,7 @@ class Context extends ContextBase, implements IContext
 	 */
 	function get_reflector():IReflector
 	{
-		if (reflector == null)
-		{
-			reflector = new Reflector();
-		}
-
+		if (reflector == null) reflector = new Reflector();
 		return reflector;
 	}
 	
@@ -184,11 +186,7 @@ class Context extends ContextBase, implements IContext
 	 */
 	function get_commandMap():ICommandMap
 	{
-		if (commandMap == null)
-		{
-			commandMap = new CommandMap(eventDispatcher, createChildInjector(), reflector);
-		}
-
+		if (commandMap == null) commandMap = new CommandMap(eventDispatcher, createChildInjector(), reflector);
 		return commandMap;
 	}
 	
@@ -197,11 +195,7 @@ class Context extends ContextBase, implements IContext
 	 */
 	function get_mediatorMap():IMediatorMap
 	{
-		if (mediatorMap == null)
-		{
-			mediatorMap = new MediatorMap(contextView, createChildInjector(), reflector);
-		}
-
+		if (mediatorMap == null) mediatorMap = new MediatorMap(contextView, createChildInjector(), reflector);
 		return mediatorMap;
 	}
 	
@@ -210,11 +204,7 @@ class Context extends ContextBase, implements IContext
 	 */
 	function get_viewMap():IViewMap
 	{
-		if (viewMap == null)
-		{
-			viewMap = new ViewMap(contextView, injector);
-		}
-
+		if (viewMap == null) viewMap = new ViewMap(contextView, injector);
 		return viewMap;
 	}
 	
@@ -228,9 +218,9 @@ class Context extends ContextBase, implements IContext
 	function mapInjections():Void
 	{
 		injector.mapValue(IReflector, reflector);
-		injector.mapValue(IInjector, injector);
+		injector.mapValue(Injector, injector);
 		injector.mapValue(IEventDispatcher, eventDispatcher);
-		injector.mapValue(IViewContainer, contextView);
+		injector.mapValue(DisplayObjectContainer, contextView);
 		injector.mapValue(ICommandMap, commandMap);
 		injector.mapValue(IMediatorMap, mediatorMap);
 		injector.mapValue(IViewMap, viewMap);
@@ -244,8 +234,7 @@ class Context extends ContextBase, implements IContext
 	{
 		if (autoStartup && contextView != null)
 		{
-			startup();
-			//contextView.stage != null ? startup() : contextView.addEventListener(Event.ADDED_TO_STAGE, onAddedToStage, false, 0, true);
+			contextView.stage != null ? startup() : contextView.addEventListener(Event.ADDED_TO_STAGE, onAddedToStage, false, 0, true);
 		}
 	}
 	
@@ -254,24 +243,35 @@ class Context extends ContextBase, implements IContext
 	 */
 	function onAddedToStage(e:Event):Void
 	{
-		//contextView.removeEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
+		contextView.removeEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
 		startup();
 	}
 	
 	/**
 	 * @private
 	 */
-	function createInjector():IInjector
+	function createInjector():Injector
 	{
-		injector = new Injector();
+		injector = new Injector();//Hack: new SwiftSuspendersInjector();
+		injector.applicationDomain = getApplicationDomainFromContextView();
 		return injector;
 	}
 	
 	/**
 	 * @private
 	 */
-	function createChildInjector():IInjector
+	function createChildInjector():Injector
 	{
-		return injector.createChildInjector();
+		return injector.createChildInjector(getApplicationDomainFromContextView());
+	}
+
+	/**
+	 * @private
+	 */
+	function getApplicationDomainFromContextView():ApplicationDomain
+	{
+		if (contextView != null && contextView.loaderInfo != null)
+			return contextView.loaderInfo.applicationDomain;
+		return ApplicationDomain.currentDomain;
 	}
 }

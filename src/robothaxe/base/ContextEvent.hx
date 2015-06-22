@@ -7,14 +7,14 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
+import openfl.events.Event;
 
 /**
  * A framework Event implementation
  */
 class ContextEvent extends Event
 {
-	public var body(getBody, null):Dynamic;
+	public var body (get, null):Dynamic;
 
 	public static var STARTUP:String = 'startup';
 	public static var STARTUP_COMPLETE:String = 'startupComplete';
@@ -32,7 +32,7 @@ class ContextEvent extends Event
 	 * @param type The <code>Event</code> type
 	 * @param body A loosely typed payload
 	 */
-	public function new(type:String, ?body:Dynamic = null)
+	public function new(type:String, body:Dynamic = null)
 	{
 		super(type);
 		_body = body;
@@ -42,7 +42,7 @@ class ContextEvent extends Event
 	 * Loosely typed <code>Event</code> payload
 	 * @return Payload
 	 */
-	public function getBody():Dynamic
+	public function get_body():Dynamic
 	{
 		return _body;
 	}

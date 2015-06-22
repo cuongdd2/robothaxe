@@ -7,8 +7,8 @@
 
 package robothaxe.mvcs;
 
-import robothaxe.event.Event;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.IEventDispatcher;
 import robothaxe.base.EventMap;
 import robothaxe.core.IEventMap;
 
@@ -43,14 +43,10 @@ class Actor
 	 *
 	 * @return The EventMap for this Actor
 	 */
-	public var eventMap(get_eventMap, null):IEventMap;
+	public var eventMap (get, null):IEventMap;
 	function get_eventMap():IEventMap
 	{
-		if (eventMap == null)
-		{
-			eventMap = new EventMap(eventDispatcher);
-		}
-
+		if (eventMap == null) eventMap = new EventMap(eventDispatcher);
 		return eventMap;
 	}
 	
@@ -62,10 +58,7 @@ class Actor
 	function dispatch(event:Event):Bool
 	{
 		if(eventDispatcher.hasEventListener(event.type))
-		{
 			return eventDispatcher.dispatchEvent(event);
-		}
-		
 		return false;
 	}
 }

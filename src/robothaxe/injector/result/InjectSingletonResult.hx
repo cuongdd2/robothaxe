@@ -5,7 +5,7 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionresults;
+package robothaxe.injector.result;
 
 import robothaxe.injector.Injector;
 
@@ -22,11 +22,7 @@ class InjectSingletonResult extends InjectionResult
 	
 	public override function getResponse(injector:Injector):Dynamic
 	{
-		if (response == null)
-		{
-			response = createResponse(injector);
-		}
-
+		if (response == null) response = createResponse(injector);
 		return response;
 	}
 	

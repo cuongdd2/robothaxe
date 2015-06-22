@@ -7,7 +7,7 @@
 
 package robothaxe.core;
 
-import robothaxe.event.IEventDispatcher;
+import openfl.events.IEventDispatcher;
 
 /**
  * The Robotlegs EventMap contract
@@ -26,7 +26,7 @@ interface IEventMap
 	 * @param priority
 	 * @param useWeakReference
 	 */
-	function mapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, ?eventClass:Class<Dynamic> = null, ?useCapture:Bool = false, ?priority:Int = 0, ?useWeakReference:Bool = true):Void;
+	function mapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, eventClass:Class<Dynamic> = null, useCapture:Bool = false, priority:Int = 0, useWeakReference:Bool = true):Void;
 	
 	/**
 	 * The same as calling <code>removeEventListener</code> directly on the <code>IEventDispatcher</code>,
@@ -38,7 +38,7 @@ interface IEventMap
 	 * @param eventClass Optional Event class for a stronger mapping. Defaults to <code>flash.events.Event</code>.
 	 * @param useCapture
 	 */
-	function unmapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, ?eventClass:Class<Dynamic> = null, ?useCapture:Bool = false):Void;
+	function unmapListener(dispatcher:IEventDispatcher, type:String, listener:Dynamic, eventClass:Class<Dynamic> = null, useCapture:Bool = false):Void;
 	
 	/**
 	 * Removes all listeners registered through <code>mapListener</code>

@@ -7,35 +7,33 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.util.Dictionary;
-import robothaxe.core.IInjector;
+import openfl.display.DisplayObject;
+import openfl.display.DisplayObjectContainer;
+import openfl.events.Event;
+import robothaxe.injector.Injector;
 import robothaxe.core.IViewMap;
-import robothaxe.core.IViewContainer;
+
+using robothaxe.util.Helper;
 
 /**
  * An abstract <code>IViewMap</code> implementation
  */
-class ViewMap extends ViewMapBase, implements IViewMap
+class ViewMap extends ViewMapBase implements IViewMap
 {
 	/**
 	 * @private
 	 */
-	
-	/**
-	 * @private
-	 */
-	var mappedPackages:Array<Dynamic>;
+	var mappedPackages:Array<String>;
 
 	/**
 	 * @private
 	 */
-	var mappedTypes:Dictionary<Dynamic, Dynamic>;
+	var mappedTypes:Map<Class<Dynamic>, Class<Dynamic>>;
 
 	/**
 	 * @private
 	 */
-	var injectedViews:Dictionary<Dynamic, Dynamic>;
+	var injectedViews:Map<DisplayObject, Bool>;
 
 	//---------------------------------------------------------------------
 	// Constructor
@@ -47,14 +45,14 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	 * @param contextView The root view node of the context. The map will listen for ADDED_TO_STAGE events on this node
 	 * @param injector An <code>IInjector</code> to use for this context
 	 */
-	public function new(contextView:IViewContainer, injector:IInjector)
+	public function new(contextView:DisplayObjectContainer, injector:Injector)
 	{
 		super(contextView, injector);
 
 		// mappings - if you can do it with fewer dictionaries you get a prize
-		this.mappedPackages = new Array<Dynamic>();
-		this.mappedTypes = new Dictionary<Dynamic, Dynamic>();
-		this.injectedViews = new Dictionary<Dynamic, Dynamic>(true);
+		this.mappedPackages = new Array<String>();
+		this.mappedTypes = new Map<Class<Dynamic>, Class<Dynamic>>();
+		this.injectedViews = new Map<DisplayObject, Bool>();
 	}
 
 	//---------------------------------------------------------------------
@@ -70,11 +68,8 @@ class ViewMap extends ViewMapBase, implements IViewMap
 		{
 			mappedPackages.push(packageName);
 			viewListenerCount++;
-
 			if (viewListenerCount == 1)
-			{
 				addListeners();
-			}
 		}
 	}
 
@@ -83,17 +78,12 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	 */
 	public function unmapPackage(packageName:String):Void
 	{
-		var index = Lambda.indexOf(mappedPackages, packageName);
-
-		if (index > -1)
+		if (Lambda.has(mappedPackages, packageName))
 		{
-			mappedPackages.splice(index, 1);
+			mappedPackages.remove(packageName);
 			viewListenerCount--;
-
 			if (viewListenerCount == 0)
-			{
 				removeListeners();
-			}
 		}
 	}
 
@@ -104,19 +94,15 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	{
 		if (mappedTypes.get(type) != null) return;
 
-		mappedTypes.add(type, type);
+		mappedTypes.set(type, type);
 
 		viewListenerCount++;
 		if (viewListenerCount == 1)
-		{
 			addListeners();
-		}
-		
-		// This was a bad idea - causes unexpected eager instantiation of object graph 
+
+		// This was a bad idea - causes unexpected eager instantiation of object graph
 		if (contextView != null && Std.is(contextView, type))
-		{
 			injectInto(contextView);
-		}
 	}
 
 	/**
@@ -126,15 +112,11 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	{
 		var mapping:Class<Dynamic> = mappedTypes.get(type);
 		mappedTypes.remove(type);
-		
 		if (mapping != null)
 		{
 			viewListenerCount--;
-
 			if (viewListenerCount == 0)
-			{
 				removeListeners();
-			}
 		}
 	}
 
@@ -143,7 +125,7 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	 */
 	public function hasType(type:Class<Dynamic>):Bool
 	{
-		return mappedTypes.get(type) != null;
+		return mappedTypes.exists(type);
 	}
 
 	/**
@@ -164,10 +146,7 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	override function addListeners():Void
 	{
 		if (contextView != null && enabled)
-		{
-			contextView.viewAdded = onViewAdded;
-			contextView.viewRemoved = onViewAdded;
-		}
+			contextView.addEventListener(Event.ADDED_TO_STAGE, onViewAdded, useCapture, 0, true);
 	}
 
 	/**
@@ -176,22 +155,18 @@ class ViewMap extends ViewMapBase, implements IViewMap
 	override function removeListeners():Void
 	{
 		if (contextView != null)
-		{
-			contextView.viewAdded = null;
-			contextView.viewRemoved = null;
-		}
+			contextView.removeEventListener(Event.ADDED_TO_STAGE, onViewAdded, useCapture);
 	}
 
 	/**
 	 * @private
 	 */
-	override function onViewAdded(view:Dynamic):Void
+	override function onViewAdded(e:Event):Void
 	{
+		var view:DisplayObject = cast(e.target, DisplayObject);
 		if (injectedViews.get(view) != null)
-		{
 			return;
-		}
-		
+
 		for (type in mappedTypes)
 		{
 			if (Std.is(view, type))
@@ -201,16 +176,13 @@ class ViewMap extends ViewMapBase, implements IViewMap
 			}
 		}
 
-		var len:Int = mappedPackages.length;
-
+		var len = mappedPackages.length;
 		if (len > 0)
 		{
-			var className = Type.getClassName(Type.getClass(view));
-
+			var className:String = view.getQualifiedClassName();
 			for (i in 0...len)
 			{
 				var packageName:String = mappedPackages[i];
-
 				if (className.indexOf(packageName) == 0)
 				{
 					injectInto(view);
@@ -225,9 +197,9 @@ class ViewMap extends ViewMapBase, implements IViewMap
 		trace("TODO");
 	}
 
-	function injectInto(view:Dynamic):Void
+	function injectInto(view:DisplayObject):Void
 	{
 		injector.injectInto(view);
-		injectedViews.add(view, true);
+		injectedViews.set(view, true);
 	}
 }

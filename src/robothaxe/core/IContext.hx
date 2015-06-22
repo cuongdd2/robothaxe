@@ -7,7 +7,7 @@
 
 package robothaxe.core;
 
-import robothaxe.event.IEventDispatcher;
+import openfl.events.IEventDispatcher;
 
 /**
  * The Robotlegs Context contract
@@ -17,6 +17,6 @@ interface IContext
 	/**
 	 * The <code>IContext</code>'s <code>IEventDispatcher</code>
 	 */
-	var eventDispatcher(default, null):IEventDispatcher;
+	var eventDispatcher (default, null):IEventDispatcher;
 
 }

@@ -6,16 +6,15 @@
 */
 package robothaxe.mvcs;
 
-import robothaxe.event.Event;
-import robothaxe.event.EventDispatcher;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.Event;
+import openfl.events.EventDispatcher;
+import openfl.events.IEventDispatcher;
 
 import massive.munit.Assert;
 import robothaxe.injector.Injector;
 import robothaxe.injector.Reflector;
 import robothaxe.base.CommandMap;
 import robothaxe.core.ICommandMap;
-import robothaxe.core.IInjector;
 import robothaxe.core.IReflector;
 import robothaxe.mvcs.support.ICommandTester;
 import robothaxe.mvcs.support.TestCommand;
@@ -27,7 +26,7 @@ class CommandTest implements ICommandTester
 	var eventDispatcher:IEventDispatcher;
 	var commandExecuted:Bool;
 	var commandMap:ICommandMap;
-	var injector:IInjector;
+	var injector:Injector;
 	var reflector:IReflector;
 	
 	public function new(){}

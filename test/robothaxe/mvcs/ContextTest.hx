@@ -9,8 +9,7 @@ package robothaxe.mvcs;
 import massive.munit.Assert;
 import massive.munit.async.AsyncFactory;
 
-import robothaxe.event.Event;
-import robothaxe.core.IViewContainer;
+import openfl.events.Event;
 import robothaxe.base.ContextEvent;
 import robothaxe.mvcs.support.TestContext;
 import robothaxe.base.support.TestContextView;

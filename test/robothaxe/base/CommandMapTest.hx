@@ -7,13 +7,13 @@
 
 package robothaxe.base;
 
+import flash.events.IEventDispatcher;
 import massive.munit.Assert;
-import robothaxe.event.EventDispatcher;
-import robothaxe.event.IEventDispatcher;
+import openfl.events.EventDispatcher;
+import openfl.events.IEventDispatcher;
 import robothaxe.base.CommandMap;
 import robothaxe.base.support.ManualCommand;
 import robothaxe.core.ICommandMap;
-import robothaxe.core.IInjector;
 import robothaxe.core.IReflector;
 import robothaxe.injector.Injector;
 import robothaxe.injector.Reflector;
@@ -27,8 +27,8 @@ class CommandMapTest implements ICommandTester
 	
 	var eventDispatcher:IEventDispatcher;
 	var commandExecuted:Bool;
+	var injector: Injector;
 	var commandMap:ICommandMap;
-	var injector:IInjector;
 	var reflector:IReflector;
 	
 	@Before
@@ -138,7 +138,7 @@ class CommandMapTest implements ICommandTester
 
 		try
 		{
-			commandMap.mapEvent(CustomEvent.STARTED, Dynamic);
+			commandMap.mapEvent(CustomEvent.STARTED, Class);
 		}
 		catch (e:Dynamic)
 		{

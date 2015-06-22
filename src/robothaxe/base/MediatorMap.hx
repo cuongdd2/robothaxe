@@ -7,24 +7,26 @@
 
 package robothaxe.base;
 
-import robothaxe.event.Event;
-import robothaxe.core.IInjector;
+import robothaxe.injector.Injector;
+import openfl.display.DisplayObjectContainer;
+import openfl.display.Sprite;
+import openfl.events.Event;
 import robothaxe.core.IMediator;
 import robothaxe.core.IMediatorMap;
 import robothaxe.core.IReflector;
-import robothaxe.util.Dictionary;
-import robothaxe.core.IViewContainer;
-import haxe.Timer;
+
+using robothaxe.util.Helper;
 
 /**
  * An abstract <code>IMediatorMap</code> implementation
  */
-class MediatorMap extends ViewMapBase, implements IMediatorMap
+class MediatorMap extends ViewMapBase implements IMediatorMap
 {
-	var mediatorByView:Dictionary<Dynamic, IMediator>;
-	var mappingConfigByView:Dictionary<Dynamic, MappingConfig>;
-	var mappingConfigByViewClassName:Dictionary<Dynamic, MappingConfig>;
-	var mediatorsMarkedForRemoval:Dictionary<Dynamic, Dynamic>;
+	static var enterFrameDispatcher:Sprite = new Sprite();
+	var mediatorByView:Map<Dynamic, IMediator>;
+	var mappingConfigByView:Map<Dynamic, MappingConfig>;
+	var mappingConfigByViewClassName:Map<String, MappingConfig>;
+	var mediatorsMarkedForRemoval:Map<Dynamic, Dynamic>;
 	var hasMediatorsMarkedForRemoval:Bool;
 	var reflector:IReflector;
 	
@@ -35,17 +37,17 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	 * @param injector An <code>IInjector</code> to use for this context
 	 * @param reflector An <code>IReflector</code> to use for this context
 	 */
-	public function new(contextView:IViewContainer, injector:IInjector, reflector:IReflector)
+	public function new(contextView:DisplayObjectContainer, injector:Injector, reflector:IReflector)
 	{
 		super(contextView, injector);
 		
 		this.reflector = reflector;
 		
 		// mappings - if you can do it with fewer dictionaries you get a prize
-		this.mediatorByView = new Dictionary(true);
-		this.mappingConfigByView = new Dictionary(true);
-		this.mappingConfigByViewClassName = new Dictionary();
-		this.mediatorsMarkedForRemoval = new Dictionary();
+		this.mediatorByView = new Map<Dynamic, IMediator>();
+		this.mappingConfigByView = new Map<Dynamic, MappingConfig>();
+		this.mappingConfigByViewClassName = new Map<String, MappingConfig>();
+		this.mediatorsMarkedForRemoval = new Map<Dynamic, Dynamic>();
 		this.hasMediatorsMarkedForRemoval = false;
 	}
 	
@@ -56,20 +58,16 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	/**
 	 * @inheritDoc
 	 */
-	public function mapView(viewClassOrName:Dynamic, mediatorClass:Class<Dynamic>, ?injectViewAs:Dynamic=null, ?autoCreate:Bool=true, ?autoRemove:Bool=true):Void
+	public function mapView(viewClassOrName:Dynamic, mediatorClass:Class<Dynamic>, injectViewAs:Dynamic=null, autoCreate:Bool=true, autoRemove:Bool=true):Void
 	{
 		var viewClassName:String = reflector.getFQCN(viewClassOrName);
 		
 		if (mappingConfigByViewClassName.get(viewClassName) != null)
-		{
 			throw new ContextError(ContextError.E_MEDIATORMAP_OVR + ' - ' + mediatorClass);
-		}
-		
+
 		if (reflector.classExtendsOrImplements(mediatorClass, IMediator) == false)
-		{
 			throw new ContextError(ContextError.E_MEDIATORMAP_NOIMPL + ' - ' + mediatorClass);
-		}
-		
+
 		var config = new MappingConfig();
 		config.mediatorClass = mediatorClass;
 		config.autoCreate = autoCreate;
@@ -90,20 +88,17 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 		{
 			config.typedViewClasses = [viewClassOrName];
 		}
-		mappingConfigByViewClassName.add(viewClassName, config);
+		mappingConfigByViewClassName.set(viewClassName, config);
 		
 		if (autoCreate || autoRemove)
 		{
 			viewListenerCount++;
-
 			if (viewListenerCount == 1)
-			{
 				addListeners();
-			}	
 		}
 		
 		// This was a bad idea - causes unexpected eager instantiation of object graph 
-		if (autoCreate && contextView != null && viewClassName == Type.getClassName(Type.getClass(contextView)))
+		if (autoCreate && contextView != null && viewClassName == contextView.getQualifiedClassName())
 		{
 			createMediatorUsing(contextView, viewClassName, config);
 		}
@@ -120,13 +115,9 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 		if (config != null && (config.autoCreate || config.autoRemove))
 		{
 			viewListenerCount--;
-
 			if (viewListenerCount == 0)
-			{
 				removeListeners();
-			}
 		}
-
 		mappingConfigByViewClassName.remove(viewClassName);
 	}
 	
@@ -143,9 +134,12 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	 */
 	public function registerMediator(viewComponent:Dynamic, mediator:IMediator):Void
 	{
-		mediatorByView.add(viewComponent, mediator);
-		var mapping = mappingConfigByViewClassName.get(Type.getClassName(Type.getClass(viewComponent)));
-		mappingConfigByView.add(viewComponent, mapping);
+		var mediatorClass = reflector.getClass(mediator);
+		if(injector.hasMapping(mediatorClass)) injector.unmap(mediatorClass);
+		injector.mapValue(mediatorClass, mediator);
+		mediatorByView.set(viewComponent, mediator);
+		var mapping = mappingConfigByViewClassName.get(viewComponent.getQualifiedClassName());
+		mappingConfigByView.set(viewComponent, mapping);
 		mediator.setViewComponent(viewComponent);
 		mediator.preRegister();
 	}
@@ -157,11 +151,13 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	{
 		if (mediator != null)
 		{
-			var viewComponent:Dynamic = mediator.getViewComponent();
+			var viewComponent = mediator.getViewComponent();
+			var mediatorClass = reflector.getClass(mediator);
 			mediatorByView.remove(viewComponent);
 			mappingConfigByView.remove(viewComponent);
 			mediator.preRemove();
 			mediator.setViewComponent(null);
+			if(injector.hasMapping(mediatorClass)) injector.unmap(mediatorClass);
 		}
 		
 		return mediator;
@@ -197,7 +193,7 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	 */
 	public function hasMediatorForView(viewComponent:Dynamic):Bool
 	{
-		return mediatorByView.get(viewComponent) != null;
+		return mediatorByView.exists(viewComponent);
 	}
 	
 	/**
@@ -205,14 +201,9 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	 */
 	public function hasMediator(mediator:IMediator):Bool
 	{
-		for (key in mediatorByView)
-		{
-			if (mediatorByView.get(key) == mediator)
-			{
+		for (med in mediatorByView)
+			if (med == mediator)
 				return true;
-			}
-		}
-			
 		return false;
 	}
 	
@@ -222,8 +213,8 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	{
 		if (contextView != null && enabled)
 		{
-			contextView.viewAdded = onViewAdded;
-			contextView.viewRemoved = onViewRemoved;
+			contextView.addEventListener(Event.ADDED_TO_STAGE, onViewAdded, useCapture, 0, true);
+			contextView.addEventListener(Event.REMOVED_FROM_STAGE, onViewRemoved, useCapture, 0, true);
 		}
 	}
 		
@@ -231,99 +222,73 @@ class MediatorMap extends ViewMapBase, implements IMediatorMap
 	{
 		if (contextView != null)
 		{
-			contextView.viewAdded = null;
-			contextView.viewRemoved = null;
+			contextView.removeEventListener(Event.ADDED_TO_STAGE, onViewAdded, useCapture);
+			contextView.removeEventListener(Event.REMOVED_FROM_STAGE, onViewRemoved, useCapture);
 		}
 	}
 	
-	override function onViewAdded(view:Dynamic):Void
+	override function onViewAdded(e: Event):Void
 	{
+		var view = e.target;
 		if (mediatorsMarkedForRemoval.get(view) != null)
 		{
 			mediatorsMarkedForRemoval.remove(view);
 			return;
 		}
-		
-		var viewClassName:String = Type.getClassName(Type.getClass(view));
+		var viewClassName:String = view.getQualifiedClassName();
 		var config = mappingConfigByViewClassName.get(viewClassName);
-		
 		if (config != null && config.autoCreate)
-		{
 			createMediatorUsing(view, viewClassName, config);
-		}
-	}
-	
-	override function onViewRemoved(view:Dynamic):Void
-	{
-		var config = mappingConfigByView.get(view);
-
-		if (config != null && config.autoRemove)
-		{
-			// don't delay until isAdded works correctly
-			removeMediatorByView(view);
-
-			/*
-			mediatorsMarkedForRemoval.add(view, view);
-
-			if (!hasMediatorsMarkedForRemoval)
-			{
-				hasMediatorsMarkedForRemoval = true;
-				Timer.delay(removeMediatorLater, 60);
-			}
-			*/
-		}
 	}
 
-	function removeMediatorLater():Void
-	{
-		for (view in mediatorsMarkedForRemoval)
-		{
-			if (!contextView.isAdded(view))
-			{
-				removeMediatorByView(view);
-			}
-			
-			mediatorsMarkedForRemoval.remove(view);
-		}
-
-		hasMediatorsMarkedForRemoval = false;
-	}
-
-	function createMediatorUsing(viewComponent:Dynamic, ?viewClassName:String=null, ?config:MappingConfig=null):IMediator
+	function createMediatorUsing(viewComponent:Dynamic, viewClassName:String=null, config:MappingConfig=null):IMediator
 	{
 		var mediator = mediatorByView.get(viewComponent);
-
 		if (mediator == null)
 		{
-			if (viewClassName == null)
-			{
-				viewClassName = Type.getClassName(Type.getClass(viewComponent));
-			}
-
-			if (config == null)
-			{
-				config = mappingConfigByViewClassName.get(viewClassName);
-			}
-
+			if (viewClassName == null) viewClassName = viewComponent.getQualifiedClassName();
+			if (config == null) config = mappingConfigByViewClassName.get(viewClassName);
 			if (config != null)
 			{
 				for (claxx in config.typedViewClasses) 
 				{
 					injector.mapValue(claxx, viewComponent);
 				}
-
 				mediator = injector.instantiate(config.mediatorClass);
-
-				for (clazz in config.typedViewClasses) 
+				for (clazz in config.typedViewClasses)
 				{
 					injector.unmap(clazz);
 				}
-
 				registerMediator(viewComponent, mediator);
 			}
 		}
+		return mediator;
+	}
 
-		return mediator;			
+	override function onViewRemoved(e: Event):Void
+	{
+		var config = mappingConfigByView.get(e.target);
+		if (config != null && config.autoRemove)
+		{
+			mediatorsMarkedForRemoval.set(e.target, e.target);
+			if (!hasMediatorsMarkedForRemoval)
+			{
+				hasMediatorsMarkedForRemoval = true;
+				enterFrameDispatcher.addEventListener(Event.ENTER_FRAME, removeMediatorLater);
+			}
+		}
+	}
+
+	function removeMediatorLater(e: Event):Void
+	{
+		enterFrameDispatcher.removeEventListener(Event.ENTER_FRAME, removeMediatorLater);
+		for (view in mediatorsMarkedForRemoval.keys())
+		{
+			if (!view.stage)
+				removeMediatorByView(view);
+			mediatorsMarkedForRemoval.remove(view);
+		}
+		hasMediatorsMarkedForRemoval = false;
 	}
 }
 

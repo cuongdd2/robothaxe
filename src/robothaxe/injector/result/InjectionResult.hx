@@ -5,7 +5,7 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionresults;
+package robothaxe.injector.result;
 
 import robothaxe.injector.Injector;
 

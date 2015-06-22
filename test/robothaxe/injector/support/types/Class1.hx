@@ -22,7 +22,7 @@
 
 package robothaxe.injector.support.types;
 
-class Class1 implements Interface1, implements Interface2
+class Class1 implements Interface1 implements Interface2
 {
 	public function new() {}
 }

@@ -6,6 +6,7 @@
 */
 
 package robothaxe.core;
+import openfl.system.ApplicationDomain;
 
 /**
  * The Robotlegs Reflector contract
@@ -19,7 +20,7 @@ interface IReflector
 	 * @param superclass
 	 * @return Boolean
 	 */
-	function classExtendsOrImplements(classOrClassName:Dynamic, superclass:Class<Dynamic>):Bool;
+	function classExtendsOrImplements(classOrClassName:Dynamic, superclass:Class<Dynamic>, applicationDomain:ApplicationDomain = null):Bool;
 	
 	/**
 	 * Get the class of this instance
@@ -28,7 +29,7 @@ interface IReflector
 	 * @param applicationDomain
 	 * @return Class
 	 */
-	function getClass(value:Dynamic):Class<Dynamic>;
+	function getClass(value:Dynamic, applicationDomain:ApplicationDomain = null):Class<Dynamic>;
 	
 	/**
 	 * Get the Fully Qualified Class Name of this instance, class name, or class
@@ -37,5 +38,5 @@ interface IReflector
 	 * @param replaceColons
 	 * @return The Fully Qualified Class Name
 	 */
-	function getFQCN(value:Dynamic):String;
+	function getFQCN(value:Dynamic, replaceColons:Bool = false):String;
 }

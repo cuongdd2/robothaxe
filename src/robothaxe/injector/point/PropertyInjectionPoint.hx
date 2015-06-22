@@ -5,7 +5,7 @@
 * in accordance with the terms of the license agreement accompanying it.
 */
 
-package robothaxe.injector.injectionpoints;
+package robothaxe.injector.point;
 
 import robothaxe.injector.InjectionConfig;
 import robothaxe.injector.Injector;
@@ -19,7 +19,7 @@ class PropertyInjectionPoint extends InjectionPoint
 	var injectionName:String;
 	var hasSetter:Bool;
 
-	public function new(meta:Dynamic, ?injector:Injector=null)
+	public function new(meta:Dynamic, injector:Injector=null)
 	{
 		super(meta, null);
 	}
